@@ -449,7 +449,7 @@ export class test extends Component {
 
 2. move assets/lib to your project.
 
-3. fun use.
+3. enjoy it!
 
 tips:  :round_pushpin:
   If you are using version 2.4.x,use 2.4.x/assets/lib.
