@@ -443,6 +443,18 @@ export class test extends Component {
 
 1.0
 
+#### 使用 :hammer:
+
+1. clone on github [https://github.com/baibai2013/vm_databinding](https://github.com/baibai2013/vm_databinding)
+
+2. move assets/lib to your project.
+
+3. fun use.
+
+tips:  :round_pushpin:
+  If you are using version 2.4.x,use 2.4.x/assets/lib.
+
+
 #### 待解优化 📋
 
 * 👉全局的vm，目前只是绑定局部的数据data之后绑定全局的model可能会更好
