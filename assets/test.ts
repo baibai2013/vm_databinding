@@ -84,7 +84,7 @@ export class test extends Component {
         'LabelOutline.color':'mydata2.color2',
         string: "我有物品${myGoods.name}:${myGoods.count}个",
         color: "mydata2.color",
-        fontSize: "${mydata2.fontSize}+1",
+        fontSize: "${mydata2.fontSize}",
     })
     @property(Label)
     lable6: Label = null;
@@ -213,6 +213,11 @@ export class test extends Component {
         this.data.goodsList = model.goodsLit;
     }
 
+    /**
+     * 
+     * @param {Button} b 按钮
+     * @param {any} data 用户自定义数据 
+     */
     clickBtn(b, data) {
         if (data == 1) {
             this.clickAdd(b, data);

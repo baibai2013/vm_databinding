@@ -85,7 +85,7 @@ export class test extends cc.Component {
         'LabelOutline.color':'mydata2.color2',
         string: "我有物品${myGoods.name}:${myGoods.count}个",
         color: "mydata2.color",
-        fontSize: "${mydata2.fontSize}+1",
+        fontSize: "${mydata2.fontSize}",
     })
     @property(cc.Label)
     lable6: cc.Label = null;

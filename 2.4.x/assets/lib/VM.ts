@@ -1,4 +1,3 @@
-
 /**
  * DateTime = Mon Sep 26 2022 13:36:06 GMT+0800 (中国标准时间)
  * Author = 柏白
@@ -16,7 +15,7 @@ export const hasChanged = (value: any, oldValue: any): boolean => !Object.is(val
 /**
  * 数据绑定
  */
-const dataBindingContainer: {} = {};
+const dataBindingContainer = new WeakMap();
 
 export const enum PropertyType {
     V_BIND = "vbind",
@@ -29,7 +28,7 @@ export const reactive = function (target: any, obj: any) {
     const handler = {
         get(target: object, propertyKey: PropertyKey, receiver?: any) {
             const result = Reflect.get(target, propertyKey);
-           
+
             if (isObject(result) && Reflect.isExtensible(result)) {
                 const tag = thiz.rawMap.get(result) || propertyKey;
                 thiz.rawMap.set(result, tag);
@@ -38,7 +37,7 @@ export const reactive = function (target: any, obj: any) {
             return isObject(result) ? reactive.call(thiz, result) : result;
         },
         set(target: object, propertyKey: PropertyKey, value: any, receiver?: any) {
-           cc.log(`set--${String(propertyKey)}--${value}`);
+            cc.log(`set--${String(propertyKey)}--${value}`);
             const extraInfo = { oldValue: target[propertyKey], newValue: value };
 
             const result = Reflect.set(target, propertyKey, value);
@@ -73,10 +72,10 @@ const emit_handle_vbind = function (element: TargetMapItem) {
             } else {
                 if (key.indexOf(".") != -1) {
                     const keyarr = key.split(".");
-                    const componentName = 'cc.'+keyarr[0];
+                    const componentName = "cc." + keyarr[0];
                     const componentKey = keyarr[1];
                     let component = node.getComponent(componentName);
-                    if(!component) component = node.addComponent(componentName);
+                    if (!component) component = node.addComponent(componentName);
                     if (Reflect.has(component, componentKey)) {
                         component[componentKey] = value;
                         if (component instanceof cc.Widget) {
@@ -84,17 +83,17 @@ const emit_handle_vbind = function (element: TargetMapItem) {
                         }
                         ok = true;
                     }
-                }else{
+                } else {
                     ok = false;
                 }
             }
-        }else   if (key.indexOf(".") != -1) {
+        } else if (key.indexOf(".") != -1) {
             let node = objKey;
             const keyarr = key.split(".");
-            const componentName = 'cc.'+keyarr[0];
+            const componentName = "cc." + keyarr[0];
             const componentKey = keyarr[1];
             let component = node.getComponent(componentName);
-            if(!component) component = node.addComponent(componentName);
+            if (!component) component = node.addComponent(componentName);
             if (Reflect.has(component, componentKey)) {
                 component[componentKey] = value;
                 if (component instanceof cc.Widget) {
@@ -102,7 +101,7 @@ const emit_handle_vbind = function (element: TargetMapItem) {
                 }
                 ok = true;
             }
-        }else{
+        } else {
             ok = false;
         }
         return ok;
@@ -116,8 +115,8 @@ const emit_handle_vbind = function (element: TargetMapItem) {
         func(this, handle)
             .then((value) => {
                 const result = setValue(this[property], key, value);
-                if(result == false){
-                    cc.error(`${property} -> ${key} not find`)
+                if (result == false) {
+                    cc.error(`${property} -> ${key} not find`);
                 }
             })
             .catch((e) => {
@@ -126,14 +125,14 @@ const emit_handle_vbind = function (element: TargetMapItem) {
     } else if ("function" == typeof handle) {
         let value = handle.call(this, this);
         const result = setValue(this[property], key, value);
-        if(result == false){
-            cc.error(`${property} -> ${key} not find`)
+        if (result == false) {
+            cc.error(`${property} -> ${key} not find`);
         }
     } else {
         let value = handle;
         const result = setValue(this[property], key, value);
-        if(result == false){
-            cc.error(`${property} -> ${key} not find`)
+        if (result == false) {
+            cc.error(`${property} -> ${key} not find`);
         }
     }
 };
@@ -169,7 +168,6 @@ const _emit_func = {
 };
 
 const emit = function (target, propertyKey, extraInfo) {
-    
     let newValue = extraInfo?.newValue;
     let oldValue = extraInfo?.oldValue;
 
@@ -187,7 +185,7 @@ const emit = function (target, propertyKey, extraInfo) {
     }
 
     // log(`emit ${propertyKey}`)
-    
+
     let map = this.targetMap[propertyKey] || [];
     // map.push({
     //     property: property,
@@ -217,6 +215,45 @@ const addToTagetMap = function (type, targetKeyArr, propertyKey, key, handle) {
     }
 };
 
+let funcGet = function (target: object, data: string[]) {
+    let property = data.shift();
+    if (target) {
+        if (data.length == 0) {
+            return target[property];
+        }
+        return funcGet(target[property], data);
+    }
+};
+
+let funcSet = function (target: object, data: string[], value: any) {
+    let property = data.shift();
+    if (target) {
+        if (data.length == 0) {
+            target[property] = value;
+            return;
+        }
+        funcSet(target[property], data, value);
+    }
+};
+
+let getValue = function (target: object, arrStr: string[]) {
+    let values = [];
+    for (let i = 0; i < arrStr.length; i++) {
+        let element = new String(arrStr[i]);
+        element = element.replace("?", "");
+        let pointArr = element.split(".");
+        let value = funcGet(target, pointArr);
+        values.push(value);
+    }
+    return values;
+};
+
+let setValue = function (target: object, propertyStr: string, value: any) {
+    let element = new String(propertyStr);
+    element = element.replace("?", "");
+    let pointArr = element.split(".");
+    funcSet(target, pointArr, value);
+};
 
 const getHandleString = function (handle: any) {
     if ("function" == typeof handle) {
@@ -263,19 +300,18 @@ const getDefaultKey = function (propertyKey) {
         return "spriteFrame";
     } else if (obj instanceof cc.ProgressBar) {
         return "progress";
-    }else if (obj instanceof cc.RichText) {
+    } else if (obj instanceof cc.RichText) {
         return "string";
-    }else if (obj instanceof cc.Slider) {
+    } else if (obj instanceof cc.Slider) {
         return "progress";
-    }else if (obj instanceof cc.Toggle) {
+    } else if (obj instanceof cc.Toggle) {
         return "isChecked";
-    }else if (obj instanceof cc.EditBox) {
+    } else if (obj instanceof cc.EditBox) {
         return "string";
     }
 
     return "string";
 };
-
 
 const getEventTargetKeyString = function (handle: string) {
     let KeyString = null;
@@ -305,22 +341,19 @@ const getEventTargetKeyString = function (handle: string) {
     return KeyString;
 };
 
-
 /**
  * 双向绑定事件
  * @param propertyKey
  * @param key
  * @param targetKeyString
  */
- const onEvent = function (propertyKey, key, targetKeyString) {
+const onEvent = function (propertyKey, key, targetKeyString) {
     if (targetKeyString) {
         const evalValue = (keyString, value) => {
             if ("string" == typeof value) {
-                value = `'${value}'`;
+                value = `${value}`;
             }
-            const funcStr = `(t)=>t.data.${keyString} = ${value}`
-            const func = eval(funcStr);
-            func.call(this,this);
+            setValue(this.data, keyString, value);
         };
 
         const event = (obj) => {
@@ -348,7 +381,6 @@ const getEventTargetKeyString = function (handle: string) {
     }
 };
 
-
 const track_vbind = function (iterator: any) {
     let { type, propertyKey, handler } = iterator;
 
@@ -357,7 +389,7 @@ const track_vbind = function (iterator: any) {
         let handle = getHandleString(handler);
         let targetKeyArr = getTargetKeyArray.call(this, handle);
         addToTagetMap.call(this, type, targetKeyArr, propertyKey, key, handler);
-   
+
         const eventTargetKeyArray = getEventTargetKeyString.call(this, handle);
         onEvent.call(this, propertyKey, key, eventTargetKeyArray);
     } else if ("function" == typeof handler) {
@@ -372,7 +404,7 @@ const track_vbind = function (iterator: any) {
             handle = getHandleString(handle);
             let targetKeyArr = getTargetKeyArray.call(this, handle);
             addToTagetMap.call(this, type, targetKeyArr, propertyKey, key, handler[key]);
-       
+
             if ("string" == typeof handle) {
                 const eventTargetKeyArray = getEventTargetKeyString.call(this, handle);
                 onEvent.call(this, propertyKey, key, eventTargetKeyArray);
@@ -429,16 +461,16 @@ const inject_define_data = function (key, targetDataBinding) {
 const inject_vsearch = function (key, targetDataBinding) {
     let propertys = targetDataBinding["vsearch"] || [];
 
-    if(propertys.length == 0) return;
+    if (propertys.length == 0) return; 
 
     let allNodeMap = new Map();
-    vsearchHandler(this.node,allNodeMap)
+    vsearchHandler(this.node, allNodeMap);
     for (const property of propertys) {
         let className = property.className;
         let tag = property.tag || property.name;
 
-        let instance = allNodeMap.get(tag)
-        if (className.name != "cc_Node") {
+        let instance = allNodeMap.get(tag);
+        if (className.prototype.__classname__ != "cc.Node") {
             instance = instance?.getComponent(className) ?? null;
         }
 
@@ -454,6 +486,18 @@ const inject_vsearch = function (key, targetDataBinding) {
 const inject_vclick = function (key, targetDataBinding) {
     let classKey = `${this.constructor.name}`;
     let propertys = targetDataBinding["vclick"] || [];
+
+    let getButtonNode = (obj) => {
+        let button = null;
+        let buttonNode = null;
+        buttonNode = obj instanceof cc.Node ? obj : obj.node;
+        button = buttonNode.getComponent(cc.Button);
+        if (!button) {
+            button = buttonNode.addComponent(cc.Button);
+        }
+        return buttonNode;
+    };
+
     for (const property of propertys) {
         let { tag, name, handler } = property;
 
@@ -468,17 +512,6 @@ const inject_vclick = function (key, targetDataBinding) {
             cc.error(`没有找到function ${handler}`);
             continue;
         }
-
-        let getButtonNode = (obj) => {
-            let button = null;
-            let buttonNode = null;
-            buttonNode = obj instanceof cc.Node ? obj : obj.node;
-            button = buttonNode.getComponent(cc.Button);
-            if (!button) {
-                button = buttonNode.addComponent(cc.Button);
-            }
-            return buttonNode;
-        };
 
         getButtonNode(this[name]).on(
             "click",
@@ -519,8 +552,8 @@ export function vm(target: any) {
      * 重载onload 注入更新
      */
     target.prototype.onLoad = function () {
-        let classKey = `${this.constructor.name}`;
-        let targetDataBinding = dataBindingContainer[classKey] || {};
+        let classKey = cc.js.getClassName(target);
+        let targetDataBinding = dataBindingContainer.get(target.prototype) || {};
 
         for (const func of _inject_func) {
             func.call(this, classKey, targetDataBinding);
@@ -531,22 +564,19 @@ export function vm(target: any) {
     };
 }
 
-
 export function vclick(handler: any, tag?: any) {
     return (target: any, propertyKey: string) => {
-        let key = `${target.constructor.name}`;
-        let targetDataBinding = dataBindingContainer[key] || {};
+        let targetDataBinding = dataBindingContainer.get(target) || {};
         let propertys = targetDataBinding["vclick"] || [];
         propertys.push({ tag: tag, name: propertyKey, handler: handler });
         targetDataBinding["vclick"] = propertys;
-        dataBindingContainer[key] = targetDataBinding;
+        dataBindingContainer.set(target, targetDataBinding);
     };
 }
 
 export function vshow(handler: any) {
     return (target: any, propertyKey: string) => {
-        let key = `${target.constructor.name}`;
-        let targetDataBinding = dataBindingContainer[key] || {};
+        let targetDataBinding = dataBindingContainer.get(target) || {};
         let protperty = targetDataBinding["protperty"] || [];
         protperty.push({
             type: PropertyType.V_SHOW,
@@ -554,7 +584,7 @@ export function vshow(handler: any) {
             handler: handler,
         });
         targetDataBinding["protperty"] = protperty;
-        dataBindingContainer[key] = targetDataBinding;
+        dataBindingContainer.set(target, targetDataBinding);
     };
 }
 
@@ -574,11 +604,11 @@ export function vshow(handler: any) {
 export function vsearch(className: any, tag?: string) {
     return (target: any, propertyKey: string) => {
         let key = `${target.constructor.name}`;
-        let targetDataBinding = dataBindingContainer[key] || {};
+        let targetDataBinding = dataBindingContainer.get(target) || {};
         let propertys = targetDataBinding["vsearch"] || [];
         propertys.push({ tag: tag, name: propertyKey, className: className });
         targetDataBinding["vsearch"] = propertys;
-        dataBindingContainer[key] = targetDataBinding;
+        dataBindingContainer.set(target, targetDataBinding);
     };
 }
 
@@ -595,7 +625,7 @@ export function vsearch(className: any, tag?: string) {
 export function vfor(handler: vforType) {
     return (target: any, propertyKey: string) => {
         let key = `${target.constructor.name}`;
-        let targetDataBinding = dataBindingContainer[key] || {};
+        let targetDataBinding = dataBindingContainer.get(target) || {};
         let protperty = targetDataBinding["protperty"] || [];
         protperty.push({
             type: PropertyType.V_FOR,
@@ -603,7 +633,7 @@ export function vfor(handler: vforType) {
             handler: handler,
         });
         targetDataBinding["protperty"] = protperty;
-        dataBindingContainer[key] = targetDataBinding;
+        dataBindingContainer.set(target, targetDataBinding);
     };
 }
 
@@ -636,8 +666,7 @@ export function vfor(handler: vforType) {
  */
 export function vbind(handler: any) {
     return (target: any, propertyKey: string) => {
-        let key = `${target.constructor.name}`;
-        let targetDataBinding = dataBindingContainer[key] || {};
+        let targetDataBinding = dataBindingContainer.get(target) || {};
         let protperty = targetDataBinding["protperty"] || [];
         protperty.push({
             type: PropertyType.V_BIND,
@@ -645,7 +674,7 @@ export function vbind(handler: any) {
             handler: handler,
         });
         targetDataBinding["protperty"] = protperty;
-        dataBindingContainer[key] = targetDataBinding;
+        dataBindingContainer.set(target, targetDataBinding);
     };
 }
 
@@ -656,18 +685,45 @@ export function vbind(handler: any) {
  * @returns
  */
 function stringHandler(target: any, data: string): Promise<string> {
+    let split = function (handlerStr) {
+        let propertyArrString = [];
+        let stack = [];
+        for (let i = 0; i < handlerStr.length; i++) {
+            const e = handlerStr[i];
+            if ("{" == e) {
+                stack.push(i + 1);
+            } else if ("}" == e) {
+                let startPos = stack.pop();
+                let length = i - startPos;
+                let propertyStr = handlerStr.substr(startPos, length);
+                propertyArrString.push(propertyStr);
+            }
+        }
+        return propertyArrString;
+    };
+
+    let replase = function (oldString, keyArr, valueArr) {
+        let newString = new String(oldString);
+        for (let i = 0; i < keyArr.length; i++) {
+            const key = keyArr[i];
+            const value = valueArr[i];
+            newString = newString.replace(`\$\{${key}\}`, value);
+        }
+        return newString;
+    };
+
     return new Promise((res, rej) => {
         try {
-            if (data.indexOf("{") != -1) {
-                data = data.replace(/{/g, "{target.data.");
+            let keyArr = split(data);
+            if (keyArr.length == 0) {
+                res(getValue(target.data, [data])[0]);
+            } else if (keyArr.length == 1 && `\$\{${keyArr[0]}\}` == data) {
+                res(getValue(target.data, keyArr)[0]);
             } else {
-                data = "${target.data." + data + "}";
+                let valueArr = getValue(target.data, keyArr);
+                let newString = replase(data, keyArr, valueArr);
+                res(newString.valueOf());
             }
-
-            let funcstr = `(target)=>\`${data}\``;
-            let func = eval(funcstr);
-            let result = func.call(target, target);
-            res(result);
         } catch (e) {
             rej("失败");
         }
@@ -684,7 +740,7 @@ function spriteFrameHandler(target: any, data: string) {
     return new Promise(async (res, rej) => {
         let url = await stringHandler(target, data);
         if (url.startsWith("http")) {
-            cc.assetManager.loadRemote(url, { ext: ".png" }, (error: Error, data:  cc.Texture2D) => {
+            cc.assetManager.loadRemote(url, { ext: ".png" }, (error: Error, data: cc.Texture2D) => {
                 if (!!error) {
                     rej(`${url}加载失败！`);
                     return;
@@ -713,19 +769,7 @@ function spriteFrameHandler(target: any, data: string) {
  * @returns
  */
 function commonHandler(target: any, data: string): Promise<any> {
-    return new Promise((res, rej) => {
-        if (data.indexOf("{") != -1) {
-            data = data.replace(/\${/g, "target.data.");
-            data = data.replace(/}/g, "");
-        } else {
-            data = "target.data." + data;
-        }
-
-        let funcstr = `(target)=>${data}`;
-        let func = eval(funcstr);
-        let result = func.call(target, target);
-        res(result);
-    });
+    return stringHandler(target, data);
 }
 
 /**
@@ -740,7 +784,7 @@ function vshowHandler(target: any, property: string, handle: any) {
         try {
             try {
                 let propertyIns = target[property];
-                let node = (propertyIns instanceof cc.Node)?propertyIns: propertyIns.node;
+                let node = propertyIns instanceof cc.Node ? propertyIns : propertyIns.node;
                 if ("string" == typeof handle) {
                     commonHandler(target, handle)
                         .then((value) => {
@@ -783,13 +827,13 @@ function vforHandler(target: any, property: string, handle: vforType) {
             for (let i = 0, length = dataIns.length; i < length; i++) {
                 const element = dataIns[i];
                 let inc = cc.instantiate(target[prefab]);
-                let compScript =  inc.getComponent(component)
-                let func_onload = compScript.onLoad
-                compScript.onLoad = function(){
+                let compScript = inc.getComponent(component);
+                let func_onload = compScript.onLoad;
+                compScript.onLoad = function () {
                     func_onload.call(compScript);
                     compScript.setData(element);
-                }
-                
+                };
+
                 propertyIns.addChild(inc);
             }
             res(1);
@@ -799,8 +843,8 @@ function vforHandler(target: any, property: string, handle: vforType) {
     });
 }
 
-function vsearchHandler(parent: any, map: Map<string,Node>) {
-    map.set(parent.name,parent)
+function vsearchHandler(parent: any, map: Map<string, Node>) {
+    map.set(parent.name, parent);
     let children = parent.children;
     for (const key in children) {
         if (!cc.isValid(children[key])) continue;
