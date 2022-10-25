@@ -461,7 +461,7 @@ const inject_define_data = function (key, targetDataBinding) {
 const inject_vsearch = function (key, targetDataBinding) {
     let propertys = targetDataBinding["vsearch"] || [];
 
-    if (propertys.length == 0) return; 
+    if (propertys.length == 0) return;
 
     let allNodeMap = new Map();
     vsearchHandler(this.node, allNodeMap);
@@ -563,7 +563,27 @@ export function vm(target: any) {
         onLoad?.call(this);
     };
 }
-
+/**
+ * 绑定点击事件
+ * @param {string | function } handler 处理点击事件的方法名称或者方法
+ * @param {any} tag  用户自定义数据
+ * @returns
+ *
+ *
+ * @example
+ *
+ *  @vclick("clickBtn", 1) //绑定当前类里的 clickBtn 并填入 自定义数据 1
+ *  @vsearch(Button)
+ *  addBtn: Button = null;
+ *
+ *  @vclick(function(b,data){ //function this可以直接操作当前类
+ *      log(`click btn ${b.name}-- ${data}`)
+ *     this.data.isshow = !this.data.isshow;
+ *   }, 2)
+ *   @vsearch(Node)
+ *   btn: Node = null;
+ *
+ */
 export function vclick(handler: any, tag?: any) {
     return (target: any, propertyKey: string) => {
         let targetDataBinding = dataBindingContainer.get(target) || {};
@@ -591,11 +611,12 @@ export function vshow(handler: any) {
 /**
  * 通过 属性名称 或者标签查询对应的node 或组件
  * @example
- *  @vsearch(Sprite)
- *   icon:Label = null;
  *
- *  @vsearch(Label,"aa")
- *   version:Label = null;
+ *  @vsearch(Label) //查找到节点名称为icon的Label组件，并赋值给icon
+ *  icon:Label = null;
+ *
+ *  @vsearch(Label,"aa") //查找名节点称为aa的Label组件，并赋值给version
+ *  version:Label = null;
  *
  * @param className 组件名称
  * @param tag 名称
@@ -619,7 +640,10 @@ export function vsearch(className: any, tag?: string) {
  *  @property(Node)
  *  content: Node = null;
  *
- * @param handler
+ * @param {object} handler
+ * @param {string} handler.prefab 预制体名称
+ * @param {Component} handler.component 预制体脚本名称
+ * @param {string} handler.data 预制体数据数组
  * @returns
  */
 export function vfor(handler: vforType) {
@@ -640,28 +664,60 @@ export function vfor(handler: vforType) {
 /**
  * 绑定数据
  * @example
+ *
  * 绑定string
+ *
+ *  @vbind('tt.aa')
+ *  @property(cc.Label)
+ *  aaa: cc.Label = null;
+ *
  *  @vbind({string:"tt.aa"})
- *  @property(Label)
- *  aaa: Label = null;
+ *  @property(cc.Label)
+ *  aaa: cc.Label = null;
  *
  *  @vbind({string:"${tt.aa}米/${bb.cc}亩"})
- *  @property(Label)
- *  aaa: Label = null;
+ *  @property(cc.Label)
+ *  aaa: cc.Label = null;
+ *
+ *  @vbind(function(){
+ *           return `${this.data.mydata2.pre}物品${this.data.myGoods?.name}--${this.data.myGoods?.count}`;
+ *    })
+ *  @property(cc.Label)
+ *  lable7: cc.Label = null;
+ *
+ *  @vbind({
+ *      'LabelOutline.color':'mydata2.color2',
+ *      string: "我有物品${myGoods.name}:${myGoods.count}个",
+ *      color: "mydata2.color",
+ *      fontSize: "${mydata2.fontSize}",
+ *  })
+ *  @property(cc.Label)
+ *  lable6: cc.Label = null;
  *
  * 绑定精灵图片
+ *
+ *  @vbind('tt.aa')
+ *  @property(cc.Sprite)
+ *  aaa: cc.Sprite = null;
+ *
  *  @vbind({spriteFrame:"tt.aa"})
- *  @property(Sprite)
- *  aaa: Sprite = null;
+ *  @property(cc.Sprite)
+ *  aaa: cc.Sprite = null;
  *
  *  @vbind({spriteFrame:"${tt.aa}"})
- *  @property(Sprite)
- *  aaa: Sprite = null;
- *
+ *  @property(cc.Sprite)
+ *  aaa: cc.Sprite = null;
  *  绑定处理器
  *
+ *  @vbind({
+ *       spriteFrame:"ggicon",
+ *      'Widget.left':'widget.left'
+ *    })
+ *  @vsearch(cc.Sprite)
+ *  icon: cc.Sprite = null;
  *
- * @param handler
+ * @param {string | function | object} handler string类型，直接绑定数据； function类型，返回结果；object，绑定多个属性
+ *
  * @returns
  */
 export function vbind(handler: any) {

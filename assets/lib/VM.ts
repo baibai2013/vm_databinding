@@ -252,19 +252,18 @@ let funcGet = function (target: object, data: string[]) {
     }
 };
 
-let funcSet = function (target: object, data: string[],value:any) {
+let funcSet = function (target: object, data: string[], value: any) {
     let property = data.shift();
     if (target) {
         if (data.length == 0) {
-             target[property] = value;
-             return
+            target[property] = value;
+            return;
         }
-        funcSet(target[property], data,value);
+        funcSet(target[property], data, value);
     }
 };
 
-
-let getValue = function (target:object,arrStr: string[]) {
+let getValue = function (target: object, arrStr: string[]) {
     let values = [];
     for (let i = 0; i < arrStr.length; i++) {
         let element = new String(arrStr[i]);
@@ -276,13 +275,12 @@ let getValue = function (target:object,arrStr: string[]) {
     return values;
 };
 
-let setValue = function (target:object,propertyStr: string,value:any) {
+let setValue = function (target: object, propertyStr: string, value: any) {
     let element = new String(propertyStr);
     element = element.replace("?", "");
     let pointArr = element.split(".");
-    funcSet(target,pointArr,value)
+    funcSet(target, pointArr, value);
 };
-
 
 const getHandleString = function (handle: any) {
     if ("function" == typeof handle) {
@@ -378,12 +376,11 @@ const getEventTargetKeyString = function (handle: string) {
  */
 const onEvent = function (propertyKey, key, targetKeyString) {
     if (targetKeyString) {
-
         const evalValue = (keyString, value) => {
             if ("string" == typeof value) {
                 value = `${value}`;
             }
-            setValue(this.data,keyString,value)
+            setValue(this.data, keyString, value);
         };
 
         const event = (obj) => {
@@ -609,9 +606,9 @@ export function vclick(handler: any, tag?: any) {
 }
 
 /**
- * sh
- * @param handler 
- * @returns 
+ * 显示节点
+ * @param {string | function } handler function类型返回boolean值为结果
+ * @returns
  */
 export function vshow(handler: any) {
     return (target: any, propertyKey: string) => {
@@ -630,11 +627,11 @@ export function vshow(handler: any) {
 /**
  * 通过 属性名称 或者标签查询对应的node 或组件
  * @example
- *  @vsearch(Sprite)
- *   icon:Label = null;
+ *  @vsearch(Label) //查找名节点称为icon的Label组件
+ *  icon:Label = null;
  *
- *  @vsearch(Label,"aa")
- *   version:Label = null;
+ *  @vsearch(Label,"aa") //查找名节点称为aa的Label组件，并赋值给version
+ *  version:Label = null;
  *
  * @param className 组件名称
  * @param tag 名称
@@ -659,7 +656,7 @@ export function vsearch(className: any, tag?: string) {
  *  content: Node = null;
  *
  * @param {string} handler.prefab 预制体名称 
- * @param {string} handler.component 预制体脚本名称 
+ * @param {Component} handler.component 预制体脚本名称 
  * @param {string} handler.data 预制体数据数组
  * @returns
  */
@@ -681,27 +678,51 @@ export function vfor(handler: vforType) {
  * 绑定数据
  * @example
  * 绑定string
+ *
+ *  @vbind('tt.aa')
+ *  @property(Label)
+ *  aaa: Label = null;
+ *
  *  @vbind({string:"tt.aa"})
  *  @property(Label)
  *  aaa: Label = null;
  *
- *  @vbind({string:"${tt.aa}米/${bb.cc}亩"})
- *  @property(Label)
- *  aaa: Label = null;
+ *  @vbind((t) => (t.data.myGoods.count > 2 ? `${t.data.myGoods.name}物品` : `卖完了`))
+ *   @property(Label)
+ *  lable5: Label = null;
+ *
+ *  @vbind({
+ *       'LabelOutline.color':'mydata2.color2',
+ *       string: "我有物品${myGoods.name}:${myGoods.count}个",
+ *       color: "mydata2.color",
+ *       fontSize: "${mydata2.fontSize}",
+ *   })
+ *   @property(Label)
+ *   lable6: Label = null;
  *
  * 绑定精灵图片
  *  @vbind({spriteFrame:"tt.aa"})
  *  @property(Sprite)
  *  aaa: Sprite = null;
  *
- *  @vbind({spriteFrame:"${tt.aa}"})
+ *  @vbind('tt.aa')
  *  @property(Sprite)
  *  aaa: Sprite = null;
+ *
+ *  @vbind({
+ *      spriteFrame: "myGoods2?.icon",
+ *      'UITransform.contentSize': 'mydata2.contentSize',
+ *      'UIOpacity.opacity': 'mydata2.opacity',
+ *      angle: 'mydata2.angle',
+ *      scale: 'mydata2.scale',
+ *   })
+ *  @property(Sprite)
+ *  sprite2: Sprite = null;
  *
  *  绑定处理器
  *
  *
- * @param handler
+ * @param {string | function | object} handler string类型，直接绑定数据； function类型，返回结果；object，绑定多个属性
  * @returns
  */
 export function vbind(handler: any) {
@@ -718,9 +739,6 @@ export function vbind(handler: any) {
     };
 }
 
-
-
-
 /**
  * 字符串处理
  * @param target
@@ -728,7 +746,6 @@ export function vbind(handler: any) {
  * @returns
  */
 function stringHandler(target: any, data: string): Promise<string> {
-
     let split = function (handlerStr) {
         let propertyArrString = [];
         let stack = [];
@@ -746,30 +763,28 @@ function stringHandler(target: any, data: string): Promise<string> {
         return propertyArrString;
     };
 
-
-    let replase = function(oldString,keyArr,valueArr){
-        let newString = new String(oldString)
+    let replase = function (oldString, keyArr, valueArr) {
+        let newString = new String(oldString);
         for (let i = 0; i < keyArr.length; i++) {
             const key = keyArr[i];
             const value = valueArr[i];
-            newString = newString.replace(`\$\{${key}\}`,value)
+            newString = newString.replace(`\$\{${key}\}`, value);
         }
-        return newString
-    }
+        return newString;
+    };
 
     return new Promise((res, rej) => {
         try {
             let keyArr = split(data);
-            if(keyArr.length == 0){
-                res(getValue(target.data,[data])[0])
-            }else if(keyArr.length == 1 && `\$\{${keyArr[0]}\}` == data){
-                res(getValue(target.data,keyArr)[0])
-            }else{
-                let valueArr = getValue(target.data,keyArr);
-                let newString = replase(data,keyArr,valueArr)
-                res(newString.valueOf())
+            if (keyArr.length == 0) {
+                res(getValue(target.data, [data])[0]);
+            } else if (keyArr.length == 1 && `\$\{${keyArr[0]}\}` == data) {
+                res(getValue(target.data, keyArr)[0]);
+            } else {
+                let valueArr = getValue(target.data, keyArr);
+                let newString = replase(data, keyArr, valueArr);
+                res(newString.valueOf());
             }
-        
         } catch (e) {
             rej("失败");
         }
@@ -818,7 +833,7 @@ function spriteFrameHandler(target: any, data: string) {
  * @returns
  */
 function commonHandler(target: any, data: string): Promise<any> {
-    return stringHandler(target,data);
+    return stringHandler(target, data);
 }
 
 /**
