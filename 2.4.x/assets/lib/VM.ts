@@ -37,7 +37,7 @@ export const reactive = function (target: any, obj: any) {
             return isObject(result) ? reactive.call(thiz, result) : result;
         },
         set(target: object, propertyKey: PropertyKey, value: any, receiver?: any) {
-            cc.log(`set--${String(propertyKey)}--${value}`);
+            // cc.log(`set--${String(propertyKey)}--${value}`);
             const extraInfo = { oldValue: target[propertyKey], newValue: value };
 
             const result = Reflect.set(target, propertyKey, value);
@@ -830,7 +830,7 @@ function vforHandler(target: any, property: string, handle: vforType) {
                 let compScript = inc.getComponent(component);
                 let func_onload = compScript.onLoad;
                 compScript.onLoad = function () {
-                    func_onload.call(compScript);
+                    func_onload?.call(compScript);
                     compScript.setData(element);
                 };
 

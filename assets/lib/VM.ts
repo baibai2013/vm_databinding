@@ -870,7 +870,7 @@ function vforHandler(target: any, property: string, handle: vforType) {
                 let compScript = inc.getComponent(component);
                 let func_onload = compScript.onLoad;
                 compScript.onLoad = function () {
-                    func_onload.call(compScript);
+                    func_onload?.call(compScript);
                     compScript.setData(element);
                 };
 
