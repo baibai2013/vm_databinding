@@ -524,8 +524,8 @@ const inject_vclick = function (key, targetDataBinding) {
 };
 
 const inject_track = function (key, targetDataBinding) {
-    let protperty = targetDataBinding["protperty"] || [];
-    for (const iterator of protperty) {
+    let property = targetDataBinding["property"] || [];
+    for (const iterator of property) {
         track.call(this, iterator);
     }
 };
@@ -577,13 +577,13 @@ export function vclick(handler: any, tag?: any) {
 export function vshow(handler: any) {
     return (target: any, propertyKey: string) => {
         let targetDataBinding = dataBindingContainer.get(target) || {};
-        let protperty = targetDataBinding["protperty"] || [];
-        protperty.push({
+        let property = targetDataBinding["property"] || [];
+        property.push({
             type: PropertyType.V_SHOW,
             propertyKey: propertyKey,
             handler: handler,
         });
-        targetDataBinding["protperty"] = protperty;
+        targetDataBinding["property"] = property;
         dataBindingContainer.set(target, targetDataBinding);
     };
 }
@@ -626,13 +626,13 @@ export function vfor(handler: vforType) {
     return (target: any, propertyKey: string) => {
         let key = `${target.constructor.name}`;
         let targetDataBinding = dataBindingContainer.get(target) || {};
-        let protperty = targetDataBinding["protperty"] || [];
-        protperty.push({
+        let property = targetDataBinding["property"] || [];
+        property.push({
             type: PropertyType.V_FOR,
             propertyKey: propertyKey,
             handler: handler,
         });
-        targetDataBinding["protperty"] = protperty;
+        targetDataBinding["property"] = property;
         dataBindingContainer.set(target, targetDataBinding);
     };
 }
@@ -667,13 +667,13 @@ export function vfor(handler: vforType) {
 export function vbind(handler: any) {
     return (target: any, propertyKey: string) => {
         let targetDataBinding = dataBindingContainer.get(target) || {};
-        let protperty = targetDataBinding["protperty"] || [];
-        protperty.push({
+        let property = targetDataBinding["property"] || [];
+        property.push({
             type: PropertyType.V_BIND,
             propertyKey: propertyKey,
             handler: handler,
         });
-        targetDataBinding["protperty"] = protperty;
+        targetDataBinding["property"] = property;
         dataBindingContainer.set(target, targetDataBinding);
     };
 }
